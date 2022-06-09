@@ -1,0 +1,5 @@
+restTemplate:
+  # 连超时时间，单位ms，默认60s
+  connectTimeout: ${REST_TEMPLATE_CONNECT-TIMEOUT:60000}
+  # 读超时时间，单位ms，默认60s
+  readTimeout: ${REST_TEMPLATE_READ-TIMEOUT:60000}
