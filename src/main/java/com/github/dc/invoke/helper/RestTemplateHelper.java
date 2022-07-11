@@ -1,21 +1,21 @@
 package com.github.dc.invoke.helper;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.github.dc.invoke.util.ApiLogSetupHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * <p>
@@ -30,6 +30,16 @@ import java.util.Map;
 @Slf4j
 public class RestTemplateHelper {
     private final RestTemplate dcRestTemplate;
+
+    /**
+     * get请求
+     * @param url
+     * @param responseType
+     * @return
+     */
+    public <R> ResponseEntity<R> get(String url, Class<R> responseType) {
+        return dcRestTemplate.getForEntity(url, responseType);
+    }
 
     /**
      * 根据下载链接获取文件字节数组
@@ -202,7 +212,7 @@ public class RestTemplateHelper {
      */
     public <R, B> ResponseEntity<R> post(String url, MediaType contentType, HttpHeaders headers, B body, Class<R> responseType) {
         RequestEntity requestEntity = RequestEntity
-                .post(null)
+                .post(url)
                 .contentType(contentType)
                 .accept(MediaType.ALL)
                 .acceptCharset(StandardCharsets.UTF_8)

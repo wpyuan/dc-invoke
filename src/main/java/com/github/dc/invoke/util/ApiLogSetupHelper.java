@@ -3,8 +3,11 @@ package com.github.dc.invoke.util;
 import com.github.dc.invoke.aop.handler.IApiLogDataHandler;
 import com.github.dc.invoke.pojo.ApiLogData;
 import com.github.dc.invoke.pojo.ApiLogSetupMethod;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -48,4 +51,58 @@ public class ApiLogSetupHelper extends ApiLogSetupMethod {
     public static Map<String, Object> getContext() {
         return get() == null ? null: (Map<String, Object>) get().get(FIELD_CONTEXT);
     }
+
+    public static ApiLogSetupHelper.ApiLogSetupBuilder builder() {
+        return new ApiLogSetupHelper.ApiLogSetupBuilder();
+    }
+
+    public static class ApiLogSetupBuilder {
+        private Map<String, Object> apiInfo = new HashMap<>(3);
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder businessKey(Object businessKey) {
+            this.apiInfo.put(FIELD_BUSINESS_KEY, businessKey);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder apiCode(String apiCode) {
+            this.apiInfo.put(ApiLogData.FIELD_API_CODE, apiCode);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder apiDesc(String apiDesc) {
+            this.apiInfo.put(ApiLogData.FIELD_API_DESC, apiDesc);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder bodyMaxLength(Integer bodyMaxLength) {
+            this.apiInfo.put(FIELD_BODY_MAX_LENGTH, bodyMaxLength);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder requestBodyEncoding(Charset requestBodyEncoding) {
+            this.apiInfo.put(FIELD_REQUEST_ENCODING, requestBodyEncoding);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder responseBodyEncoding(Charset responseBodyEncoding) {
+            this.apiInfo.put(FIELD_ENCODING, responseBodyEncoding);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder handler(Class<? extends IApiLogDataHandler> handler) {
+            this.apiInfo.put(FIELD_HANDLER, handler);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder context(Map<String, Object> context) {
+            this.apiInfo.put(FIELD_CONTEXT, context);
+            return this;
+        }
+
+        public void build() {
+            ApiLogSetupHelper.set(this.apiInfo);
+        }
+
+    }
+
 }
