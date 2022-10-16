@@ -72,12 +72,11 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
 
         Long startTime = System.currentTimeMillis();
         ClientHttpResponse response = null;
-        Long endTime = 0L;
         try {
             response = clientHttpRequestExecution.execute(request, bytes);
             String responseContent = IOUtils.toString(response.getBody(), ObjectUtils.defaultIfNull(responseBodyEncoding, StandardCharsets.UTF_8));
             if (log.isTraceEnabled()) {
-                log.trace("=========<<<< end 接口请求<<<< 耗时: {}ms {}/{}, {} \"{}\" 返回body: {}", (endTime - startTime),
+                log.trace("=========<<<< end 接口请求<<<< 耗时: {}ms {}/{}, {} \"{}\" 返回body: {}", (System.currentTimeMillis() - startTime),
                         response.getStatusCode(), response.getStatusText(), request.getMethod(),
                         request.getURI(), responseContent);
             }
