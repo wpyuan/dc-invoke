@@ -2,6 +2,7 @@ package com.github.dc.invoke.wrapper;
 
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
@@ -11,6 +12,9 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author PeiYuan
@@ -27,7 +31,34 @@ public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
      */
     public ReuseHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
-        body = new String(IOUtils.toByteArray(request.getInputStream()));
+        body = getBodyString(request);
+    }
+
+    protected String getBodyString(final HttpServletRequest request) throws IOException {
+        String contentType = request.getContentType();
+        String bodyString = "";
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isNotBlank(contentType) && (contentType.contains("multipart/form-data") || contentType.contains("x-www-form-urlencoded"))) {
+            Map<String, String[]> parameterMap = request.getParameterMap();
+            for (Map.Entry<String, String[]> next : parameterMap.entrySet()) {
+                String[] values = next.getValue();
+                String value = null;
+                if (values != null) {
+                    if (values.length == 1) {
+                        value = values[0];
+                    } else {
+                        value = Arrays.toString(values);
+                    }
+                }
+                sb.append(next.getKey()).append("=").append(value).append("&");
+            }
+            if (sb.length() > 0) {
+                bodyString = sb.toString().substring(0, sb.toString().length() - 1);
+            }
+            return bodyString;
+        } else {
+            return new String(IOUtils.toByteArray(request.getInputStream()));
+        }
     }
 
     @Override
