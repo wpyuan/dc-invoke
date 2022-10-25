@@ -54,7 +54,13 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
         Map<String, Object> context = ApiLogSetupHelper.getContext();
         String ip = IpAddressUtil.getIp();
         String contentType = ObjectUtils.defaultIfNull(request.getHeaders().getContentType(), "").toString();
-        String body = URLDecoder.decode(new String(bytes), ObjectUtils.defaultIfNull(requestBodyEncoding, StandardCharsets.UTF_8).name());
+        String body = null;
+        try {
+            body = URLDecoder.decode(new String(bytes), ObjectUtils.defaultIfNull(requestBodyEncoding, StandardCharsets.UTF_8).name());
+        } catch (Exception e) {
+            body = new String(bytes);
+        }
+
         ApiLogData apiLogData = ApiLogData.builder()
                 .businessKey(businessKey)
                 .apiCode(StringUtils.defaultIfBlank(apiCode, "缺省"))
