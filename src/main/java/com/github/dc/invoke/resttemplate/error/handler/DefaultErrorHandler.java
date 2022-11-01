@@ -31,7 +31,6 @@ public class DefaultErrorHandler implements ResponseErrorHandler {
     public void handleError(ClientHttpResponse clientHttpResponse) throws IOException {
         String status = clientHttpResponse.getStatusCode().toString();
         String body = IOUtils.toString(clientHttpResponse.getBody(), StandardCharsets.UTF_8);
-
-        throw new InvokeException("接口调用失败。返回内容 -> " + status + "，" + body);
+        throw new InvokeException(clientHttpResponse.getStatusCode(), "外部接口调用失败！", body);
     }
 }
