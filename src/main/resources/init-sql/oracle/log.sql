@@ -3,6 +3,7 @@ create table TY_API_LOG
     ID                   NUMBER(22) not null
         constraint TY_API_LOG_PK
         primary key,
+    BUSINESS_KEY VARCHAR2(300),
     API_CODE             VARCHAR2(300),
     API_DESC             VARCHAR2(300),
     URL                  VARCHAR2(300),
@@ -23,6 +24,9 @@ create table TY_API_LOG
     /
 
 comment on table TY_API_LOG is '系统统一接口日志'
+/
+
+comment on column TY_API_LOG.BUSINESS_KEY is '业务主键'
 /
 
 comment on column TY_API_LOG.API_CODE is '接口代码'
