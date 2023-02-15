@@ -21,5 +21,11 @@ public @interface ApiLog {
      */
     String desc() default "接口描述";
 
+    /**
+     * 该日志对应的业务主键.支持SpEL
+     * @return
+     */
+    String businessKey() default "";
+
     Class<? extends IApiLogDataHandler> handler();
 }

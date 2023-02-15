@@ -17,6 +17,13 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -24,6 +31,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
@@ -45,15 +53,29 @@ public class ApiLogAspect {
      * @return 结果
      * @throws Throwable
      */
-    @Around(value = "@annotation(enableApiLog)")
-    public Object doAround(ProceedingJoinPoint proceedingJoinPoint, ApiLog enableApiLog) throws Throwable {
+    @Around(value = "@annotation(apiLog)")
+    public Object doAround(ProceedingJoinPoint proceedingJoinPoint, ApiLog apiLog) throws Throwable {
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression expression = parser.parseExpression(apiLog.businessKey());
+        EvaluationContext context = new StandardEvaluationContext();
+        MethodSignature signature = (MethodSignature) proceedingJoinPoint.getSignature();
+        Method method = signature.getMethod();
+        LocalVariableTableParameterNameDiscoverer u = new LocalVariableTableParameterNameDiscoverer();
+        Object[] arguments = proceedingJoinPoint.getArgs();
+        String[] paramNames = u.getParameterNames(method);
+        for (int i = 0; i < arguments.length; i++) {
+            context.setVariable(paramNames[i], arguments[i]);
+        }
+        String businessKey = expression.getValue(context, String.class);
+
         // 得到 HttpServletRequest
         HttpServletRequest request = new ReuseHttpServletRequest(((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest());
 
         // 获取注解信息
         ApiLogData apiLogData = ApiLogData.builder()
-                .apiCode(enableApiLog.code())
-                .apiDesc(enableApiLog.desc())
+                .businessKey(businessKey)
+                .apiCode(apiLog.code())
+                .apiDesc(apiLog.desc())
                 .url(request.getRequestURL().toString())
                 .method(request.getMethod())
                 .ip(request.getRemoteAddr())
@@ -79,7 +101,7 @@ public class ApiLogAspect {
         } finally {
             // 执行时间
             apiLogData = apiLogData.toBuilder().consumeTime(System.currentTimeMillis() - startTime).build();
-            IApiLogDataHandler handler = this.getHandler(enableApiLog.handler());
+            IApiLogDataHandler handler = this.getHandler(apiLog.handler());
             handler.handle(apiLogData);
         }
 
