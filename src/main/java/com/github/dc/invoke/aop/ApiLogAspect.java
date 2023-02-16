@@ -55,18 +55,7 @@ public class ApiLogAspect {
      */
     @Around(value = "@annotation(apiLog)")
     public Object doAround(ProceedingJoinPoint proceedingJoinPoint, ApiLog apiLog) throws Throwable {
-        ExpressionParser parser = new SpelExpressionParser();
-        Expression expression = parser.parseExpression(apiLog.businessKey());
-        EvaluationContext context = new StandardEvaluationContext();
-        MethodSignature signature = (MethodSignature) proceedingJoinPoint.getSignature();
-        Method method = signature.getMethod();
-        LocalVariableTableParameterNameDiscoverer u = new LocalVariableTableParameterNameDiscoverer();
-        Object[] arguments = proceedingJoinPoint.getArgs();
-        String[] paramNames = u.getParameterNames(method);
-        for (int i = 0; i < arguments.length; i++) {
-            context.setVariable(paramNames[i], arguments[i]);
-        }
-        String businessKey = expression.getValue(context, String.class);
+        String businessKey = this.getBusinessKey(proceedingJoinPoint, apiLog);
 
         // 得到 HttpServletRequest
         HttpServletRequest request = new ReuseHttpServletRequest(((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest());
@@ -196,12 +185,37 @@ public class ApiLogAspect {
      * @param handleClazz 处理器class
      * @return 处理器
      */
-    public IApiLogDataHandler getHandler(Class<? extends IApiLogDataHandler> handleClazz) {
+    private IApiLogDataHandler getHandler(Class<? extends IApiLogDataHandler> handleClazz) {
         IApiLogDataHandler apiLogDataHandler = ApplicationContextHelper.getBean(handleClazz);
         if (apiLogDataHandler != null) {
             return apiLogDataHandler;
         }
         return ReflectUtil.instance(handleClazz);
     }
+
+    /**
+     * 获取业务主键
+     * @param proceedingJoinPoint
+     * @param apiLog
+     * @return
+     */
+    private String getBusinessKey(ProceedingJoinPoint proceedingJoinPoint, ApiLog apiLog) {
+        if (StringUtils.isBlank(apiLog.businessKey())) {
+            return null;
+        }
+        ExpressionParser parser = new SpelExpressionParser();
+        Expression expression = parser.parseExpression(apiLog.businessKey());
+        EvaluationContext context = new StandardEvaluationContext();
+        MethodSignature signature = (MethodSignature) proceedingJoinPoint.getSignature();
+        Method method = signature.getMethod();
+        LocalVariableTableParameterNameDiscoverer u = new LocalVariableTableParameterNameDiscoverer();
+        Object[] arguments = proceedingJoinPoint.getArgs();
+        String[] paramNames = u.getParameterNames(method);
+        for (int i = 0; i < arguments.length; i++) {
+            context.setVariable(paramNames[i], arguments[i]);
+        }
+        return expression.getValue(context, String.class);
+    }
+
 }
 
