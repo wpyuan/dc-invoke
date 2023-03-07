@@ -3,17 +3,24 @@ package com.github.dc.invoke.helper;
 import com.github.dc.invoke.util.ApiLogSetupHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 /**
  * <p>
@@ -49,26 +56,6 @@ public class RestTemplateHelper {
     public <R> ResponseEntity<R> get(String url, HttpHeaders headers, Class<R> responseType) {
         HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
         return dcRestTemplate.exchange(url, HttpMethod.GET, httpEntity, responseType);
-    }
-
-    /**
-     * 根据下载链接获取文件字节数组
-     * @param url
-     * @return
-     */
-    public ResponseEntity<byte[]> getBytesForEntity(String url) {
-        return dcRestTemplate.getForEntity(url, byte[].class);
-    }
-
-    /**
-     * 根据下载链接获取文件字节数组
-     * @param url
-     * @param headers
-     * @return
-     */
-    public ResponseEntity<byte[]> getBytesForEntity(String url, HttpHeaders headers) {
-        HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
-        return dcRestTemplate.exchange(url, HttpMethod.GET, httpEntity, byte[].class);
     }
 
     /**
@@ -124,6 +111,47 @@ public class RestTemplateHelper {
             os.write(this.getBytes(url, headers));
         } catch (IOException e) {
             log.warn("下载资源失败，GET {}" + url, e);
+        }
+    }
+
+    /**
+     * 根据下载链接获取文件字节数组
+     * @param url
+     * @return
+     */
+    public ResponseEntity<byte[]> getBytesForEntity(String url) {
+        return this.getBytesForEntity(url, new HttpHeaders());
+    }
+
+    /**
+     * 根据下载链接获取文件字节数组
+     * @param url
+     * @param headers
+     * @return
+     */
+    public ResponseEntity<byte[]> getBytesForEntity(String url, HttpHeaders headers) {
+        /**
+         * 对响应进行流式处理而不是将其全部加载到内存中
+         * 设置了请求头APPLICATION_OCTET_STREAM，表示以流的形式进行数据加载
+         */
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
+        HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
+        RequestCallback requestCallback = dcRestTemplate.httpEntityCallback(httpEntity);
+        File responseFile = dcRestTemplate.execute(url, HttpMethod.GET, requestCallback, clientHttpResponse -> {
+            File tempFile = File.createTempFile("download", ".tmp");
+            try (InputStream inputStream = clientHttpResponse.getBody()){
+                Files.copy(inputStream, Paths.get(tempFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+            }
+            return tempFile;
+        });
+        try {
+            byte[] fileBytes = FileUtils.readFileToByteArray(responseFile);
+            return ResponseEntity.ok(fileBytes);
+        } catch (IOException e) {
+            throw new RuntimeException("文件下载成功后保存至本地临时文件发生异常", e);
+        } finally {
+            // 删除临时文件
+            responseFile.delete();
         }
     }
 
