@@ -467,4 +467,12 @@ public class RestTemplateHelper {
                 .body(body);
         return dcRestTemplate.exchange(requestEntity, responseType);
     }
+
+    /**
+     * 实例，用于调用原有未封装的方法
+     * @return
+     */
+    public RestTemplate instance() {
+        return this.dcRestTemplate;
+    }
 }
