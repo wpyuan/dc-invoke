@@ -91,6 +91,10 @@ public class ApiLogData {
      */
     private String responseCode;
     /**
+     * 请求外部接口的返回头，当IS_INNER字段为false时有值
+     */
+    private String responseHeaders;
+    /**
      * 上下文
      */
     private Map<String, Object> context;

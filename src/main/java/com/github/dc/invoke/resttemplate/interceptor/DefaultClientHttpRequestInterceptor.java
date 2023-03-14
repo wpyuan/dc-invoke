@@ -1,5 +1,6 @@
 package com.github.dc.invoke.resttemplate.interceptor;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.github.dc.invoke.aop.handler.IApiLogDataHandler;
 import com.github.dc.invoke.helper.ApplicationContextHelper;
 import com.github.dc.invoke.pojo.ApiLogData;
@@ -90,6 +91,7 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
                     .isSuccess(response.getStatusCode().is2xxSuccessful())
                     .responseContent(responseContent)
                     .responseCode(response.getStatusCode() + "/" + response.getStatusText())
+                    .responseHeaders(JSONObject.toJSONString(response.getHeaders()))
                     .build();
         } catch (Exception e) {
             apiLogData = apiLogData.toBuilder()
