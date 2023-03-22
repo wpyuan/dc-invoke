@@ -6,7 +6,7 @@ create table DC_API_LOG
     BUSINESS_KEY VARCHAR2(300),
     API_CODE             VARCHAR2(300),
     API_DESC             VARCHAR2(300),
-    URL                  VARCHAR2(300),
+    URL                  VARCHAR2(500),
     METHOD               VARCHAR2(300),
     IP                   VARCHAR2(300),
     REQUEST_HEADERS      CLOB,
