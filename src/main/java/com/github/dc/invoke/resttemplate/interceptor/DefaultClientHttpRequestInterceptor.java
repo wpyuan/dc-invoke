@@ -20,6 +20,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -40,9 +41,10 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] bytes,
                                         ClientHttpRequestExecution clientHttpRequestExecution) throws IOException {
+        URI uri = request.getURI();
         if (log.isTraceEnabled()) {
             log.trace("=========>>>> start 接口请求>>>> {} \"{}\", headers: {}, bytes: {}", request.getMethod(),
-                    request.getURI(), request.getHeaders(), new String(bytes));
+                    uri, request.getHeaders(), new String(bytes));
         }
 
         Object businessKey = ApiLogSetupHelper.getBusinessKey();
@@ -66,10 +68,11 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
                 .businessKey(businessKey)
                 .apiCode(StringUtils.defaultIfBlank(apiCode, "缺省"))
                 .apiDesc(StringUtils.defaultIfBlank(apiDesc, "缺省"))
-                .url(String.valueOf(request.getURI()))
+                .url(uri.getScheme() + "://" + uri.getAuthority() + uri.getPath())
                 .method(String.valueOf(request.getMethod()))
                 .ip(ip)
                 .requestHeaders(request.getHeaders().toString())
+                .requestQuery(uri.getQuery())
                 .requestBody(bodyMaxLength == null || bodyMaxLength > body.length() ? body : body.substring(0, bodyMaxLength))
                 .requestContentType(contentType)
                 .isInner(false)
@@ -85,7 +88,7 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
             if (log.isTraceEnabled()) {
                 log.trace("=========<<<< end 接口请求<<<< 耗时: {}ms {}/{}, {} \"{}\" 返回body: {}", (System.currentTimeMillis() - startTime),
                         response.getStatusCode(), response.getStatusText(), request.getMethod(),
-                        request.getURI(), responseContent);
+                        uri, responseContent);
             }
             apiLogData = apiLogData.toBuilder()
                     .isSuccess(response.getStatusCode().is2xxSuccessful())
