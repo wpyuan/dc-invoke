@@ -19,6 +19,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.CodeSignature;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
+import org.springframework.core.annotation.Order;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -44,6 +45,7 @@ import java.util.Map;
 @Aspect
 @Component
 @Slf4j
+@Order(99)
 public class ApiLogAspect {
 
     /**
