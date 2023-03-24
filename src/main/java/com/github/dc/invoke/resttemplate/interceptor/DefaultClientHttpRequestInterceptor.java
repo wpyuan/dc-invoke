@@ -1,5 +1,6 @@
 package com.github.dc.invoke.resttemplate.interceptor;
 
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.github.dc.invoke.aop.handler.IApiLogDataHandler;
 import com.github.dc.invoke.helper.ApplicationContextHelper;
@@ -71,7 +72,7 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
                 .url(uri.getScheme() + "://" + uri.getAuthority() + uri.getPath())
                 .method(String.valueOf(request.getMethod()))
                 .ip(ip)
-                .requestHeaders(request.getHeaders().toString())
+                .requestHeaders(JSON.toJSONString(request.getHeaders()))
                 .requestQuery(uri.getQuery())
                 .requestBody(bodyMaxLength == null || bodyMaxLength > body.length() ? body : body.substring(0, bodyMaxLength))
                 .requestContentType(contentType)
