@@ -44,6 +44,10 @@ public class ApiLogSetupHelper extends ApiLogSetupMethod {
         return get() == null ? null: (Charset) get().get(FIELD_ENCODING);
     }
 
+    public static Boolean getFileUpload() {
+        return get() == null ? null: (Boolean) get().get(FIELD_FILE_UPLOAD);
+    }
+
     public static Class<? extends IApiLogDataHandler> getHandler() {
         return get() == null ? null: (Class<? extends IApiLogDataHandler>) get().get(FIELD_HANDLER);
     }
@@ -86,6 +90,11 @@ public class ApiLogSetupHelper extends ApiLogSetupMethod {
 
         public ApiLogSetupHelper.ApiLogSetupBuilder responseBodyEncoding(Charset responseBodyEncoding) {
             this.apiInfo.put(FIELD_ENCODING, responseBodyEncoding);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder fileUpload(Boolean fileUpload) {
+            this.apiInfo.put(FIELD_FILE_UPLOAD, fileUpload);
             return this;
         }
 

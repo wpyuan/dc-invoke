@@ -11,6 +11,7 @@ import com.github.dc.invoke.util.IpAddressUtil;
 import com.github.dc.invoke.util.ReflectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -58,11 +59,16 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
         Map<String, Object> context = ApiLogSetupHelper.getContext();
         String ip = IpAddressUtil.getIp();
         String contentType = ObjectUtils.defaultIfNull(request.getHeaders().getContentType(), "").toString();
+        Boolean isFileUpload = ApiLogSetupHelper.getFileUpload();
         String body = null;
-        try {
-            body = URLDecoder.decode(new String(bytes), ObjectUtils.defaultIfNull(requestBodyEncoding, StandardCharsets.UTF_8).name());
-        } catch (Exception e) {
-            body = new String(bytes);
+        if (BooleanUtils.isNotTrue(isFileUpload)) {
+            // 文件上传接口不缓存body，有OOM风险
+            try {
+                body = URLDecoder.decode(new String(bytes), ObjectUtils.defaultIfNull(requestBodyEncoding, StandardCharsets.UTF_8).name());
+            } catch (Exception e) {
+                body = new String(bytes);
+            }
+            body = bodyMaxLength == null || bodyMaxLength > body.length() ? body : body.substring(0, bodyMaxLength);
         }
 
         ApiLogData apiLogData = ApiLogData.builder()
@@ -74,7 +80,7 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
                 .ip(ip)
                 .requestHeaders(JSON.toJSONString(request.getHeaders()))
                 .requestQuery(uri.getQuery())
-                .requestBody(bodyMaxLength == null || bodyMaxLength > body.length() ? body : body.substring(0, bodyMaxLength))
+                .requestBody(body)
                 .requestContentType(contentType)
                 .isInner(false)
                 .requestDate(new Date())
