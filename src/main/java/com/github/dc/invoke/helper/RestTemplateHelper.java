@@ -1,6 +1,5 @@
 package com.github.dc.invoke.helper;
 
-import com.github.dc.invoke.util.ApiLogSetupHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +34,7 @@ import java.util.Arrays;
 @Slf4j
 public class RestTemplateHelper {
     private final RestTemplate dcRestTemplate;
+    private final RestTemplate noCacheBodyRestTemplate;
 
     /**
      * get请求
@@ -243,7 +243,14 @@ public class RestTemplateHelper {
     public <R> ResponseEntity<R> postFormData(String url, LinkedMultiValueMap<String, Object> param, String fileParamName, File file, Class<R> responseType) {
         FileSystemResource fileResource = new FileSystemResource(file);
         param.add(fileParamName, fileResource);
-        return this.post(url, MediaType.parseMediaType("multipart/form-data; charset=UTF-8"), null, param, responseType);
+        RequestEntity requestEntity = RequestEntity
+                .post(url)
+                .contentType(MediaType.parseMediaType("multipart/form-data; charset=UTF-8"))
+                .accept(MediaType.ALL)
+                .acceptCharset(StandardCharsets.UTF_8)
+                .headers((HttpHeaders) null)
+                .body(param);
+        return noCacheBodyRestTemplate.postForEntity(url, requestEntity, responseType);
     }
 
     /**
@@ -260,7 +267,14 @@ public class RestTemplateHelper {
     public <R> ResponseEntity<R> postFormData(String url, HttpHeaders headers, LinkedMultiValueMap<String, Object> param, String fileParamName, File file, Class<R> responseType) {
         FileSystemResource fileResource = new FileSystemResource(file);
         param.add(fileParamName, fileResource);
-        return this.post(url, MediaType.parseMediaType("multipart/form-data; charset=UTF-8"), headers, param, responseType);
+        RequestEntity requestEntity = RequestEntity
+                .post(url)
+                .contentType(MediaType.parseMediaType("multipart/form-data; charset=UTF-8"))
+                .accept(MediaType.ALL)
+                .acceptCharset(StandardCharsets.UTF_8)
+                .headers(headers)
+                .body(param);
+        return noCacheBodyRestTemplate.postForEntity(url, requestEntity, responseType);
     }
 
     /**

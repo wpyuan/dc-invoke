@@ -11,7 +11,7 @@
 
     <groupId>com.github.wpyuan</groupId>
     <artifactId>dc-invoke</artifactId>
-    <version>0.3.8</version>
+    <version>0.4.0</version>
     <name>dc-invoke</name>
     <description>dc-invoke project for Spring Boot</description>
     <packaging>jar</packaging>
@@ -91,11 +91,6 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>3.14.7</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
