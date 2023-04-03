@@ -60,6 +60,7 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
         String ip = IpAddressUtil.getIp();
         String contentType = ObjectUtils.defaultIfNull(request.getHeaders().getContentType(), "").toString();
         Boolean isFileUpload = ApiLogSetupHelper.getFileUpload();
+        Boolean isFileDownload = ApiLogSetupHelper.getFileDownload();
         String body = null;
         if (BooleanUtils.isNotTrue(isFileUpload)) {
             // 文件上传接口不缓存body，有OOM风险
@@ -91,7 +92,11 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
         ClientHttpResponse response = null;
         try {
             response = clientHttpRequestExecution.execute(request, bytes);
-            String responseContent = IOUtils.toString(response.getBody(), ObjectUtils.defaultIfNull(responseBodyEncoding, StandardCharsets.UTF_8));
+            // 下载大文件IOUtils.toString会OOM，此时不记录响应内容
+            String responseContent = null;
+            if (BooleanUtils.isNotTrue(isFileDownload)) {
+                responseContent = IOUtils.toString(response.getBody(), ObjectUtils.defaultIfNull(responseBodyEncoding, StandardCharsets.UTF_8));
+            }
             if (log.isTraceEnabled()) {
                 log.trace("=========<<<< end 接口请求<<<< 耗时: {}ms {}/{}, {} \"{}\" 返回body: {}", (System.currentTimeMillis() - startTime),
                         response.getStatusCode(), response.getStatusText(), request.getMethod(),
@@ -103,7 +108,7 @@ public class DefaultClientHttpRequestInterceptor implements ClientHttpRequestInt
                     .responseCode(response.getStatusCode() + "/" + response.getStatusText())
                     .responseHeaders(JSONObject.toJSONString(response.getHeaders()))
                     .build();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             apiLogData = apiLogData.toBuilder()
                     .isSuccess(false)
                     .exceptionStack(StringUtils.join(ExceptionUtils.getRootCauseStackTrace(e), StringUtils.LF))

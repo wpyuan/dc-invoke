@@ -48,6 +48,10 @@ public class ApiLogSetupHelper extends ApiLogSetupMethod {
         return get() == null ? null: (Boolean) get().get(FIELD_FILE_UPLOAD);
     }
 
+    public static Boolean getFileDownload() {
+        return get() == null ? null: (Boolean) get().get(FIELD_FILE_DOWNLOAD);
+    }
+
     public static Class<? extends IApiLogDataHandler> getHandler() {
         return get() == null ? null: (Class<? extends IApiLogDataHandler>) get().get(FIELD_HANDLER);
     }
@@ -95,6 +99,11 @@ public class ApiLogSetupHelper extends ApiLogSetupMethod {
 
         public ApiLogSetupHelper.ApiLogSetupBuilder fileUpload(Boolean fileUpload) {
             this.apiInfo.put(FIELD_FILE_UPLOAD, fileUpload);
+            return this;
+        }
+
+        public ApiLogSetupHelper.ApiLogSetupBuilder fileDownload(Boolean fileDownload) {
+            this.apiInfo.put(FIELD_FILE_DOWNLOAD, fileDownload);
             return this;
         }
 

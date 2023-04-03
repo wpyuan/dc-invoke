@@ -26,6 +26,7 @@ public abstract class ApiLogSetupMethod {
     public static final String FIELD_REQUEST_ENCODING = "requestEncoding";
     public static final String FIELD_BODY_MAX_LENGTH = "bodyMaxLength";
     public static final String FIELD_FILE_UPLOAD = "fileUpload";
+    public static final String FIELD_FILE_DOWNLOAD = "fileDownload";
 
     public static void set(String apiCode, String apiDesc, Class<? extends IApiLogDataHandler> handler) {
         set(null, apiCode, apiDesc, null, StandardCharsets.UTF_8, null, handler, null);

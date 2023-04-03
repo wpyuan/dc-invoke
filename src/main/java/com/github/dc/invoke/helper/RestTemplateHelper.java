@@ -136,8 +136,8 @@ public class RestTemplateHelper {
          */
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
         HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
-        RequestCallback requestCallback = dcRestTemplate.httpEntityCallback(httpEntity);
-        File responseFile = dcRestTemplate.execute(url, HttpMethod.GET, requestCallback, clientHttpResponse -> {
+        RequestCallback requestCallback = noCacheBodyRestTemplate.httpEntityCallback(httpEntity);
+        File responseFile = noCacheBodyRestTemplate.execute(url, HttpMethod.GET, requestCallback, clientHttpResponse -> {
             File tempFile = File.createTempFile("download", ".tmp");
             try (InputStream inputStream = clientHttpResponse.getBody()){
                 Files.copy(inputStream, Paths.get(tempFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
