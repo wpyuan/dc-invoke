@@ -55,12 +55,12 @@ public class RestTemplateConfig {
     }
 
     /**
-     * 基于HttpURLConnection配置RestTemplate（不缓存请求body，不会出现大文件上传OOM）
+     * 基于HttpURLConnection配置RestTemplate（不缓存请求body，不会出现大文件下载OOM）
      * @param restTemplateProperty
      * @return
      */
-    @Bean("noCacheBodyRestTemplate")
-    public RestTemplate noCacheBodyRestTemplate(RestTemplateProperty restTemplateProperty) {
+    @Bean("downBigFileRestTemplate")
+    public RestTemplate downBigFileRestTemplate(RestTemplateProperty restTemplateProperty) {
         RestTemplate restTemplate = init();
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         simpleClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
@@ -68,6 +68,24 @@ public class RestTemplateConfig {
         simpleClientHttpRequestFactory.setBufferRequestBody(false);
         restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
 
+        return restTemplate;
+    }
+
+    /**
+     * 基于HttpURLConnection配置RestTemplate（不缓存请求body，不会出现大文件上传OOM）
+     * @param restTemplateProperty
+     * @return
+     */
+    @Bean("uploadBigFileRestTemplate")
+    public RestTemplate uploadBigFileRestTemplate(RestTemplateProperty restTemplateProperty) {
+        RestTemplate restTemplate = init();
+        SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
+        simpleClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
+        simpleClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
+        simpleClientHttpRequestFactory.setBufferRequestBody(false);
+        restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
+        // 不能有拦截器，不然等文件大过运行内存必出现OOM
+        restTemplate.setInterceptors(new ArrayList<>());
         return restTemplate;
     }
 
