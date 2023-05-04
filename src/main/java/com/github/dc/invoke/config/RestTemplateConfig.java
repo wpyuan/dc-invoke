@@ -78,14 +78,14 @@ public class RestTemplateConfig {
      */
     @Bean("uploadBigFileRestTemplate")
     public RestTemplate uploadBigFileRestTemplate(RestTemplateProperty restTemplateProperty) {
-        RestTemplate restTemplate = init();
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         simpleClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
         simpleClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
         simpleClientHttpRequestFactory.setBufferRequestBody(false);
+        RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
+        restTemplate.setErrorHandler(new DefaultErrorHandler());
         restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
         // 不能有拦截器，不然等文件大过运行内存必出现OOM
-        restTemplate.setInterceptors(new ArrayList<>());
         return restTemplate;
     }
 

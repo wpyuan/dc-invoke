@@ -149,6 +149,51 @@ public class RestTemplateHelper {
      * 根据下载链接获取文件字节数组
      *
      * @param url
+     * @return
+     */
+    public File getFile(String url) {
+        return this.getFileForEntity(url, new HttpHeaders()).getBody();
+    }
+
+    /**
+     * 根据下载链接获取文件字节数组
+     *
+     * @param url
+     * @return
+     */
+    public ResponseEntity<File> getFileForEntity(String url) {
+        return this.getFileForEntity(url, new HttpHeaders());
+    }
+
+    /**
+     * 根据下载链接获取文件字节数组
+     *
+     * @param url
+     * @param headers
+     * @return
+     */
+    public ResponseEntity<File> getFileForEntity(String url, HttpHeaders headers) {
+        /**
+         * 对响应进行流式处理而不是将其全部加载到内存中
+         * 设置了请求头APPLICATION_OCTET_STREAM，表示以流的形式进行数据加载
+         */
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
+        HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
+        RequestCallback requestCallback = downBigFileRestTemplate.httpEntityCallback(httpEntity);
+        File responseFile = downBigFileRestTemplate.execute(url, HttpMethod.GET, requestCallback, clientHttpResponse -> {
+            File tempFile = File.createTempFile("download", ".tmp");
+            try (InputStream inputStream = clientHttpResponse.getBody()) {
+                Files.copy(inputStream, Paths.get(tempFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
+            }
+            return tempFile;
+        });
+        return ResponseEntity.ok(responseFile);
+    }
+
+    /**
+     * 根据下载链接获取文件字节数组
+     *
+     * @param url
      * @param headers
      * @return
      */
