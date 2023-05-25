@@ -180,6 +180,7 @@ public class RestTemplateHelper {
         headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
         HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
         RequestCallback requestCallback = downBigFileRestTemplate.httpEntityCallback(httpEntity);
+        ApiLogSetupHelper.setFileDownload(true);
         File responseFile = downBigFileRestTemplate.execute(url, HttpMethod.GET, requestCallback, clientHttpResponse -> {
             File tempFile = File.createTempFile("download", ".tmp");
             try (InputStream inputStream = clientHttpResponse.getBody()) {
@@ -198,28 +199,11 @@ public class RestTemplateHelper {
      * @return
      */
     public ResponseEntity<byte[]> getBytesForEntity(String url, HttpHeaders headers) {
-        /**
-         * 对响应进行流式处理而不是将其全部加载到内存中
-         * 设置了请求头APPLICATION_OCTET_STREAM，表示以流的形式进行数据加载
-         */
-        headers.setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
-        HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(headers);
-        RequestCallback requestCallback = downBigFileRestTemplate.httpEntityCallback(httpEntity);
-        File responseFile = downBigFileRestTemplate.execute(url, HttpMethod.GET, requestCallback, clientHttpResponse -> {
-            File tempFile = File.createTempFile("download", ".tmp");
-            try (InputStream inputStream = clientHttpResponse.getBody()) {
-                Files.copy(inputStream, Paths.get(tempFile.getAbsolutePath()), StandardCopyOption.REPLACE_EXISTING);
-            }
-            return tempFile;
-        });
+        ResponseEntity<File> response = this.getFileForEntity(url, headers);
         try {
-            byte[] fileBytes = FileUtils.readFileToByteArray(responseFile);
-            return ResponseEntity.ok(fileBytes);
+            return ResponseEntity.ok(FileUtils.readFileToByteArray(response.getBody()));
         } catch (IOException e) {
-            throw new RuntimeException("文件下载成功后保存至本地临时文件发生异常", e);
-        } finally {
-            // 删除临时文件
-            responseFile.delete();
+            throw new RuntimeException("文件下载成功后转存到内存发生异常", e);
         }
     }
 

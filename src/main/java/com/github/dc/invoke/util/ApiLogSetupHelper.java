@@ -20,6 +20,13 @@ import java.util.Map;
  */
 public class ApiLogSetupHelper extends ApiLogSetupMethod {
 
+    public static void setFileDownload(Boolean fileDownload) {
+        if (get() == null) {
+            ApiLogSetupHelper.set(new HashMap<>(1));
+        }
+        get().put(FIELD_FILE_DOWNLOAD, fileDownload);
+    }
+
     public static Object getBusinessKey() {
         return get() == null ? null: get().get(FIELD_BUSINESS_KEY);
     }
