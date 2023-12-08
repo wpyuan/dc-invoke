@@ -2,6 +2,7 @@ package com.github.dc.invoke.resttemplate.error.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -12,7 +13,6 @@ import org.springframework.http.HttpStatus;
  * @author wangpeiyuan
  * @date 2021/7/12 8:57
  */
-@Getter
 public class InvokeException extends RuntimeException {
 
     /**
@@ -49,5 +49,17 @@ public class InvokeException extends RuntimeException {
 
     public InvokeException(Throwable cause) {
         super(cause);
+    }
+
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    public Object getResponse() {
+        return response;
+    }
+
+    public String getMessage() {
+        return this.status + StringUtils.SPACE + this.message + "外部系统返回：" + this.response;
     }
 }

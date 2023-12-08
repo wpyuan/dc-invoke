@@ -11,7 +11,7 @@
 
     <groupId>com.github.wpyuan</groupId>
     <artifactId>dc-invoke</artifactId>
-    <version>0.4.6</version>
+    <version>0.4.7</version>
     <name>dc-invoke</name>
     <description>dc-invoke project for Spring Boot</description>
     <packaging>jar</packaging>
