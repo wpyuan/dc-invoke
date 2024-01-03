@@ -13,19 +13,12 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import javax.net.ssl.*;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,10 +48,9 @@ public class RestTemplateConfig {
     public RestTemplate restTemplate(RestTemplateProperty restTemplateProperty) {
         RestTemplate restTemplate = init();
         // 支持https请求，绕过验证
-        X509TrustManager manager = getX509TrustManager();
         OkHttpClient client = new OkHttpClient.Builder()
-                .sslSocketFactory(getSocketFactory(manager), manager)
-                .hostnameVerifier(getHostnameVerifier())
+                .sslSocketFactory(HttpsClientHttpRequestFactory.getSocketFactory(), HttpsClientHttpRequestFactory.getX509TrustManager())
+                .hostnameVerifier(HttpsClientHttpRequestFactory.getHostnameVerifier())
                 .build();
         OkHttp3ClientHttpRequestFactory okHttp3ClientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
         okHttp3ClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
@@ -77,12 +69,11 @@ public class RestTemplateConfig {
     @Bean("downBigFileRestTemplate")
     public RestTemplate downBigFileRestTemplate(RestTemplateProperty restTemplateProperty) {
         RestTemplate restTemplate = init();
-        SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
-        simpleClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
-        simpleClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
-        simpleClientHttpRequestFactory.setBufferRequestBody(false);
-        restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
-
+        HttpsClientHttpRequestFactory httpsClientHttpRequestFactory = new HttpsClientHttpRequestFactory();
+        httpsClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
+        httpsClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
+        httpsClientHttpRequestFactory.setBufferRequestBody(false);
+        restTemplate.setRequestFactory(httpsClientHttpRequestFactory);
         return restTemplate;
     }
 
@@ -94,58 +85,15 @@ public class RestTemplateConfig {
      */
     @Bean("uploadBigFileRestTemplate")
     public RestTemplate uploadBigFileRestTemplate(RestTemplateProperty restTemplateProperty) {
-        SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
-        simpleClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
-        simpleClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
-        simpleClientHttpRequestFactory.setBufferRequestBody(false);
-        RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
+        HttpsClientHttpRequestFactory httpsClientHttpRequestFactory = new HttpsClientHttpRequestFactory();
+        httpsClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
+        httpsClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
+        httpsClientHttpRequestFactory.setBufferRequestBody(false);
+        RestTemplate restTemplate = new RestTemplate(httpsClientHttpRequestFactory);
         restTemplate.setErrorHandler(new DefaultErrorHandler());
-        restTemplate.setRequestFactory(simpleClientHttpRequestFactory);
+        restTemplate.setRequestFactory(httpsClientHttpRequestFactory);
         // 不能有拦截器，不然等文件大过运行内存必出现OOM
         return restTemplate;
-    }
-
-    public static X509TrustManager getX509TrustManager() {
-        return new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-            }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
-            }
-        };
-    }
-
-    public static SSLSocketFactory getSocketFactory(TrustManager manager) {
-        SSLSocketFactory socketFactory = null;
-        try {
-            SSLContext sslContext = SSLContext.getInstance("SSL");
-            sslContext.init(null, new TrustManager[]{manager}, new SecureRandom());
-            socketFactory = sslContext.getSocketFactory();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (KeyManagementException e) {
-            e.printStackTrace();
-        }
-        return socketFactory;
-    }
-
-    public static HostnameVerifier getHostnameVerifier() {
-        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-            @Override
-            public boolean verify(String s, SSLSession sslSession) {
-                return true;
-            }
-        };
-        return hostnameVerifier;
     }
 
     private RestTemplate init() {
@@ -163,6 +111,5 @@ public class RestTemplateConfig {
                 .messageConverters(httpMessageConverters)
                 .build();
     }
-
 }
 

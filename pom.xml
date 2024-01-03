@@ -11,7 +11,7 @@
 
     <groupId>com.github.wpyuan</groupId>
     <artifactId>dc-invoke</artifactId>
-    <version>0.4.7</version>
+    <version>0.5.0</version>
     <name>dc-invoke</name>
     <description>dc-invoke project for Spring Boot</description>
     <packaging>jar</packaging>
@@ -97,6 +97,11 @@
             <artifactId>logback-classic</artifactId>
             <version>1.2.3</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.httpcomponents</groupId>-->
+<!--            <artifactId>httpclient</artifactId>-->
+<!--            <version>4.5.14</version>-->
+<!--        </dependency>-->
     </dependencies>
 
     <distributionManagement>
