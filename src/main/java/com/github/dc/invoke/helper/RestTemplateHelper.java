@@ -262,7 +262,7 @@ public class RestTemplateHelper {
     }
 
     /**
-     * post form-data格式内容请求
+     * post form-data格式内容请求(小文件上传，大文件有OOM风险)
      *
      * @param url          请求地址
      * @param param        请求form内容
@@ -275,7 +275,7 @@ public class RestTemplateHelper {
     }
 
     /**
-     * post form-data格式内容请求
+     * post form-data格式内容请求(小文件上传，大文件有OOM风险)
      *
      * @param url          请求地址
      * @param headers      请求头
@@ -289,7 +289,7 @@ public class RestTemplateHelper {
     }
 
     /**
-     * post form-data格式内容请求
+     * post form-data格式内容请求(大文件上传)
      *
      * @param url           请求地址
      * @param param         请求form内容
@@ -304,7 +304,7 @@ public class RestTemplateHelper {
     }
 
     /**
-     * post form-data格式内容请求
+     * post form-data格式内容请求(大文件上传)
      *
      * @param url           请求地址
      * @param headers       请求头
