@@ -85,16 +85,19 @@ public class RestTemplateConfig {
      */
     @Bean("uploadBigFileRestTemplate")
     public RestTemplate uploadBigFileRestTemplate(RestTemplateProperty restTemplateProperty) {
+        RestTemplate restTemplate = this.init();
         HttpsClientHttpRequestFactory httpsClientHttpRequestFactory = new HttpsClientHttpRequestFactory();
         httpsClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
         httpsClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
         httpsClientHttpRequestFactory.setBufferRequestBody(false);
-        RestTemplate restTemplate = new RestTemplateBuilder()
-                .errorHandler(new DefaultErrorHandler())
-                .messageConverters(this.setMessageConverter())
-                .requestFactory(() -> httpsClientHttpRequestFactory)
-                .build();
+        // 设置OutputStreaming为false，不以流模式传输文件，避免接口服务提供端不支持，导致Error writing request body to server。
+        // 如果接口服务提供端支持流的传输方式，建议设置OutputStreaming为true（默认值）且头不要指定content-length。
+        //   这样当头没有指定content-length时，以ChunkedStreamingMode分块流模式传输文件，避免OOM；
+        //   如果指定了content-length且大文件时，以FixedLengthStreamingMode一次性加载到内存的模式，会出现IOException: too many bytes written。
+        httpsClientHttpRequestFactory.setOutputStreaming(false);
+        restTemplate.setRequestFactory(httpsClientHttpRequestFactory);
         // 不能有拦截器，不然等文件大过运行内存必出现OOM
+        restTemplate.setInterceptors(new ArrayList<>());
         return restTemplate;
     }
 
