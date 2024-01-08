@@ -89,17 +89,16 @@ public class RestTemplateConfig {
         httpsClientHttpRequestFactory.setReadTimeout(restTemplateProperty.getReadTimeout());
         httpsClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
         httpsClientHttpRequestFactory.setBufferRequestBody(false);
-        RestTemplate restTemplate = new RestTemplate(httpsClientHttpRequestFactory);
-        List<HttpMessageConverter<?>> httpMessageConverters = new ArrayList<>();
-        httpMessageConverters.add(new FormHttpMessageConverter());
-        restTemplate.setMessageConverters(httpMessageConverters);
-        restTemplate.setErrorHandler(new DefaultErrorHandler());
-        restTemplate.setRequestFactory(httpsClientHttpRequestFactory);
+        RestTemplate restTemplate = new RestTemplateBuilder()
+                .errorHandler(new DefaultErrorHandler())
+                .messageConverters(this.setMessageConverter())
+                .requestFactory(() -> httpsClientHttpRequestFactory)
+                .build();
         // 不能有拦截器，不然等文件大过运行内存必出现OOM
         return restTemplate;
     }
 
-    private RestTemplate init() {
+    private List<HttpMessageConverter<?>> setMessageConverter() {
         FastJsonHttpMessageConverter fastJsonHttpMessageConverter = new FastJsonHttpMessageConverter();
         fastJsonHttpMessageConverter.setSupportedMediaTypes(Arrays.asList(MediaType.APPLICATION_JSON_UTF8));
         RestTemplate original = new RestTemplate();
@@ -108,10 +107,14 @@ public class RestTemplateConfig {
         httpMessageConverters.add(fastJsonHttpMessageConverter);
         httpMessageConverters.add(new FormHttpMessageConverter());
         httpMessageConverters.addAll(original.getMessageConverters());
+        return httpMessageConverters;
+    }
+
+    private RestTemplate init() {
         return new RestTemplateBuilder()
                 .errorHandler(new DefaultErrorHandler())
                 .interceptors(defaultClientHttpRequestInterceptor)
-                .messageConverters(httpMessageConverters)
+                .messageConverters(this.setMessageConverter())
                 .build();
     }
 }
