@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
+ * 同时在jar包运行时加上字符编码指定为UTF-8：-Dfile.encoding=UTF-8
+ *
  * @author PeiYuan
  */
 @Getter
@@ -57,13 +59,13 @@ public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
             }
             return bodyString;
         } else {
-            return new String(IOUtils.toByteArray(request.getInputStream()));
+            return new String(IOUtils.toByteArray(request.getInputStream()), StandardCharsets.UTF_8);
         }
     }
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
         ServletInputStream servletInputStream = new ServletInputStream() {
             @Override
             public boolean isFinished() {
