@@ -47,6 +47,9 @@ import java.util.Map;
 @Slf4j
 @Order(99)
 public class ApiLogAspect {
+    public static final String PRINT_RESPONSE = "printResponse";
+    private static final String PRINT_BODY = "printBody";
+
 
     /**
      * 环绕
@@ -61,7 +64,8 @@ public class ApiLogAspect {
 
         // 得到 HttpServletRequest
         HttpServletRequest request = new ReuseHttpServletRequest(((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest());
-
+        Map<String, Object> context = new HashMap<>(1);
+        context.put(PRINT_RESPONSE, apiLog.printResponse());
         // 获取注解信息
         ApiLogData apiLogData = ApiLogData.builder()
                 .businessKey(businessKey)
@@ -76,14 +80,16 @@ public class ApiLogAspect {
                 .requestContentType(request.getContentType())
                 .isInner(true)
                 .requestDate(new Date())
+                .context(context)
                 .build();
         long startTime = System.currentTimeMillis();
         Object result = null;
         try {
             result = proceedingJoinPoint.proceed();
-            apiLogData = apiLogData.toBuilder().isSuccess(true)
-                    .responseContent(JSON.toJSONString(result))
-                    .build();
+            apiLogData.setIsSuccess(true);
+            if (apiLog.printResponse()) {
+                apiLogData.setResponseContent(JSON.toJSONString(result));
+            }
         } catch (Throwable e) {
             apiLogData = apiLogData.toBuilder().isSuccess(false)
                     .exceptionStack(StringUtils.join(ExceptionUtils.getRootCauseStackTrace(e), StringUtils.LF))

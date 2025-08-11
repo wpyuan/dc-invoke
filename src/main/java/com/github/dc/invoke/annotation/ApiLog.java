@@ -28,4 +28,10 @@ public @interface ApiLog {
     String businessKey() default "";
 
     Class<? extends IApiLogDataHandler> handler();
+
+    /**
+     * 是否打印响应内容
+     * @return
+     */
+    boolean printResponse() default false;
 }

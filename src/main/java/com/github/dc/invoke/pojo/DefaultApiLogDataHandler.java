@@ -37,12 +37,15 @@ public class DefaultApiLogDataHandler implements IApiLogDataHandler {
         log.info("\t\t query： {}", apiLogData.getRequestQuery());
         log.info("\t\t body： {}", printBody ? apiLogData.getRequestBody() : "已设置不打印");
         log.info("\t\t 调用是否成功： {}，返回状态码： {}", apiLogData.getIsSuccess(), apiLogData.getResponseCode());
+        log.info("\t\t 耗时： {}毫秒", apiLogData.getConsumeTime());
         if (!apiLogData.getIsInner()) {
             log.info("\t\t 返回头：{}", apiLogData.getResponseHeaders());
         }
-        log.info("\t\t 返回： {}",  printResponse ? apiLogData.getResponseContent() : "已设置不打印");
-        log.info("\t\t 异常： {}", apiLogData.getExceptionStack());
-        log.info("\t\t 耗时： {}毫秒", apiLogData.getConsumeTime());
+        if (apiLogData.getIsSuccess()) {
+            log.info("\t\t 返回： {}",  printResponse ? apiLogData.getResponseContent() : "已设置不打印");
+        } else {
+            log.info("\t\t 异常： {}", apiLogData.getExceptionStack());
+        }
         log.info("<=====================================================================================================================");
         if (!printBody) {
             apiLogData.setRequestBody("已设置不记录");
