@@ -6,6 +6,7 @@ import com.github.dc.invoke.annotation.ApiLog;
 import com.github.dc.invoke.aop.handler.IApiLogDataHandler;
 import com.github.dc.invoke.helper.ApplicationContextHelper;
 import com.github.dc.invoke.pojo.ApiLogData;
+import com.github.dc.invoke.util.IpAddressUtil;
 import com.github.dc.invoke.util.ReflectUtil;
 import com.github.dc.invoke.wrapper.ReuseHttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +74,7 @@ public class ApiLogAspect {
                 .apiDesc(apiLog.desc())
                 .url(request.getRequestURL().toString())
                 .method(request.getMethod())
-                .ip(request.getRemoteAddr())
+                .ip(IpAddressUtil.getClientIp(request))
                 .requestHeaders(this.getHeaders(request))
                 .requestQuery(this.getQuery(request))
                 .requestBody(this.getBody(request, proceedingJoinPoint))

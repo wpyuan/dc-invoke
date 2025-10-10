@@ -8,10 +8,7 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
@@ -23,8 +20,9 @@ import java.util.Map;
  */
 @Getter
 public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
-    private final String body;
-
+    private final byte[] rawBody;
+    private String body;
+    private final ByteArrayInputStream cachedInputStream;
     /**
      * Constructs a request object wrapping the given request.
      *
@@ -33,54 +31,63 @@ public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
      */
     public ReuseHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
-        body = getBodyString(request);
+        this.rawBody = IOUtils.toByteArray(request.getInputStream());
+        this.cachedInputStream = new ByteArrayInputStream(this.rawBody);
+        if (isFormData(request.getContentType())) {
+            this.body = this.getFormBodyString(request);
+        } else {
+            this.body = new String(this.rawBody, StandardCharsets.UTF_8);
+        }
     }
 
-    protected String getBodyString(final HttpServletRequest request) throws IOException {
+    protected String getFormBodyString(final HttpServletRequest request) throws IOException {
         String contentType = request.getContentType();
+        if (!isFormData(contentType)) return null;
         String bodyString = "";
         StringBuilder sb = new StringBuilder();
-        if (StringUtils.isNotBlank(contentType) && (contentType.contains("multipart/form-data") || contentType.contains("x-www-form-urlencoded"))) {
-            Map<String, String[]> parameterMap = request.getParameterMap();
-            for (Map.Entry<String, String[]> next : parameterMap.entrySet()) {
-                String[] values = next.getValue();
-                String value = null;
-                if (values != null) {
-                    if (values.length == 1) {
-                        value = values[0];
-                    } else {
-                        value = Arrays.toString(values);
-                    }
+        // 表单数据处理逻辑优化
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        for (Map.Entry<String, String[]> next : parameterMap.entrySet()) {
+            String[] values = next.getValue();
+            String value = null;
+            if (values != null) {
+                if (values.length == 1) {
+                    value = values[0];
+                } else {
+                    value = Arrays.toString(values);
                 }
-                sb.append(next.getKey()).append("=").append(value).append("&");
             }
-            if (sb.length() > 0) {
-                bodyString = sb.toString().substring(0, sb.toString().length() - 1);
-            }
-            return bodyString;
-        } else {
-            return new String(IOUtils.toByteArray(request.getInputStream()), StandardCharsets.UTF_8);
+            sb.append(next.getKey()).append("=").append(value).append("&");
         }
+        if (sb.length() > 0) {
+            bodyString = sb.toString().substring(0, sb.toString().length() - 1);
+        }
+        return bodyString;
+    }
+
+    private boolean isFormData(String contentType) {
+        return StringUtils.isNotBlank(contentType) && (contentType.contains("multipart/form-data") || contentType.contains("application/x-www-form-urlencoded"));
     }
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
         ServletInputStream servletInputStream = new ServletInputStream() {
             @Override
             public boolean isFinished() {
-                return false;
+                return cachedInputStream.available() == 0;
             }
             @Override
             public boolean isReady() {
-                return false;
+                // 输入流始终可读
+                return true;
             }
             @Override
             public void setReadListener(ReadListener readListener) {
+                // 可选实现
             }
             @Override
             public int read() throws IOException {
-                return byteArrayInputStream.read();
+                return cachedInputStream.read();
             }
         };
         return servletInputStream;
@@ -88,7 +95,7 @@ public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
 
     @Override
     public BufferedReader getReader() throws IOException {
-        return new BufferedReader(new InputStreamReader(this.getInputStream()));
+        return new BufferedReader(new InputStreamReader(this.getInputStream(), StandardCharsets.UTF_8));
     }
 
 }
