@@ -64,7 +64,10 @@ public class ApiLogAspect {
         String businessKey = this.getBusinessKey(proceedingJoinPoint, apiLog);
 
         // 得到 HttpServletRequest
-        HttpServletRequest request = new ReuseHttpServletRequest(((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest());
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        if (!(request instanceof ReuseHttpServletRequest)) {
+            request = new ReuseHttpServletRequest(request);
+        }
         Map<String, Object> context = new HashMap<>(1);
         context.put(PRINT_RESPONSE, apiLog.printResponse());
         // 获取注解信息
