@@ -20,7 +20,6 @@ import java.util.Map;
  */
 @Getter
 public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
-    private final byte[] rawBody;
     private String body;
     private final ByteArrayInputStream cachedInputStream;
     /**
@@ -31,13 +30,12 @@ public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
      */
     public ReuseHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
-        this.rawBody = IOUtils.toByteArray(request.getInputStream());
-        this.cachedInputStream = new ByteArrayInputStream(this.rawBody);
         if (isFormData(request.getContentType())) {
             this.body = this.getFormBodyString(request);
         } else {
-            this.body = new String(this.rawBody, StandardCharsets.UTF_8);
+            this.body = IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
         }
+        this.cachedInputStream = new ByteArrayInputStream(this.body.getBytes(StandardCharsets.UTF_8));
     }
 
     protected String getFormBodyString(final HttpServletRequest request) throws IOException {
