@@ -61,6 +61,13 @@ public class ApiLogAspect {
      */
     @Around(value = "@annotation(apiLog)")
     public Object doAround(ProceedingJoinPoint proceedingJoinPoint, ApiLog apiLog) throws Throwable {
+        String apiCode = this.getValueBySpringEL(proceedingJoinPoint, apiLog, apiLog.code());
+        IApiLogDataHandler handler = this.getHandler(apiLog.handler());
+        // 不启用日志处理
+        if (!handler.enable(apiCode)) {
+            return proceedingJoinPoint.proceed();
+        }
+
         String businessKey = this.getBusinessKey(proceedingJoinPoint, apiLog);
 
         // 得到 HttpServletRequest
@@ -73,7 +80,7 @@ public class ApiLogAspect {
         // 获取注解信息
         ApiLogData apiLogData = ApiLogData.builder()
                 .businessKey(businessKey)
-                .apiCode(apiLog.code())
+                .apiCode(apiCode)
                 .apiDesc(apiLog.desc())
                 .url(request.getRequestURL().toString())
                 .method(request.getMethod())
@@ -102,7 +109,6 @@ public class ApiLogAspect {
         } finally {
             // 执行时间
             apiLogData = apiLogData.toBuilder().consumeTime(System.currentTimeMillis() - startTime).build();
-            IApiLogDataHandler handler = this.getHandler(apiLog.handler());
             handler.handle(apiLogData);
         }
 
@@ -212,11 +218,15 @@ public class ApiLogAspect {
      * @return
      */
     private String getBusinessKey(ProceedingJoinPoint proceedingJoinPoint, ApiLog apiLog) {
-        if (StringUtils.isBlank(apiLog.businessKey())) {
+        return this.getValueBySpringEL(proceedingJoinPoint, apiLog, apiLog.businessKey());
+    }
+
+    private String getValueBySpringEL(ProceedingJoinPoint proceedingJoinPoint, ApiLog apiLog, String springEL) {
+        if (StringUtils.isBlank(springEL)) {
             return null;
         }
         ExpressionParser parser = new SpelExpressionParser();
-        Expression expression = parser.parseExpression(apiLog.businessKey());
+        Expression expression = parser.parseExpression(springEL);
         EvaluationContext context = new StandardEvaluationContext();
         MethodSignature signature = (MethodSignature) proceedingJoinPoint.getSignature();
         Method method = signature.getMethod();
@@ -228,6 +238,5 @@ public class ApiLogAspect {
         }
         return expression.getValue(context, String.class);
     }
-
 }
 
