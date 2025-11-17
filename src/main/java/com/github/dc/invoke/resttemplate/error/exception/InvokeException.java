@@ -59,6 +59,10 @@ public class InvokeException extends RuntimeException {
         return response;
     }
 
+    public String getOriginMessage() {
+        return message;
+    }
+
     public String getMessage() {
         return this.status + StringUtils.SPACE + this.message + "外部系统返回：" + this.response;
     }
