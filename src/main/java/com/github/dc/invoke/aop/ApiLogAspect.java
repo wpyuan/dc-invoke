@@ -33,6 +33,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -72,9 +73,12 @@ public class ApiLogAspect {
 
         // 得到 HttpServletRequest
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        if (!(request instanceof ReuseHttpServletRequest)) {
-            request = new ReuseHttpServletRequest(request);
+        // 请求可能已被过滤器等包装为ReuseHttpServletRequest，沿包装链查找复用，避免重复包装导致requestBody读取为空
+        HttpServletRequest reuseRequest = this.getReuseHttpServletRequest(request);
+        if (reuseRequest == null) {
+            reuseRequest = new ReuseHttpServletRequest(request);
         }
+        request = reuseRequest;
         Map<String, Object> context = new HashMap<>(1);
         context.put(PRINT_RESPONSE, apiLog.printResponse());
         // 获取注解信息
@@ -196,6 +200,23 @@ public class ApiLogAspect {
             body = ((ReuseHttpServletRequest) request).getBody();
         }
         return body;
+    }
+
+    /**
+     * 在request包装链中查找已存在的ReuseHttpServletRequest，防止重复包装导致body读取为空
+     * @param request 请求
+     * @return 已存在的ReuseHttpServletRequest，不存在则返回null
+     */
+    private HttpServletRequest getReuseHttpServletRequest(HttpServletRequest request) {
+        HttpServletRequest current = request;
+        HttpServletRequest reuseRequest = null;
+        while (current instanceof HttpServletRequestWrapper) {
+            if (current instanceof ReuseHttpServletRequest) {
+                reuseRequest = current;
+            }
+            current = (HttpServletRequest) ((HttpServletRequestWrapper) current).getRequest();
+        }
+        return reuseRequest;
     }
 
     /**

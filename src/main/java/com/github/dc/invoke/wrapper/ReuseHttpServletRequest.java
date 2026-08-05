@@ -30,7 +30,10 @@ public class ReuseHttpServletRequest extends HttpServletRequestWrapper {
      */
     public ReuseHttpServletRequest(HttpServletRequest request) throws IOException {
         super(request);
-        if (isFormData(request.getContentType())) {
+        if (request instanceof ReuseHttpServletRequest) {
+            // 已被包装过，直接复用缓存的body，避免二次读取已消费的输入流导致body为空
+            this.body = ((ReuseHttpServletRequest) request).getBody();
+        } else if (isFormData(request.getContentType())) {
             this.body = this.getFormBodyString(request);
         } else {
             this.body = IOUtils.toString(request.getInputStream(), StandardCharsets.UTF_8);
