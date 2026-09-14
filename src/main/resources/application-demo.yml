@@ -3,3 +3,6 @@ restTemplate:
   connectTimeout: ${REST_TEMPLATE_CONNECT-TIMEOUT:60000}
   # 读超时时间，单位ms，默认60s
   readTimeout: ${REST_TEMPLATE_READ-TIMEOUT:60000}
+  # 外部接口调用日志中，响应体最大记录长度（字节）。超过此值只记录前 N 字节，防止大响应体导致 OOM。
+  # 默认 1MB (1048576)。设置为 -1 表示不限制（不推荐，大文件下载/大JSON响应会占满堆内存）
+  responseBodyLogMaxLength: 1048576
