@@ -108,30 +108,50 @@ public class RestTemplateHelper {
 
     /**
      * 根据下载链接获取文件字节数组并写入输出流
+     * 优化: 先下载到临时文件，再流式写入输出流，避免将整个文件加载到内存
      *
      * @param url
      * @param os
      */
     public void getBytesToOutputStream(String url, OutputStream os) {
+        File tempFile = null;
         try {
-            os.write(this.getBytes(url));
+            ResponseEntity<File> response = this.getFileForEntity(url, new HttpHeaders());
+            tempFile = response.getBody();
+            if (tempFile != null) {
+                Files.copy(tempFile.toPath(), os);
+            }
         } catch (IOException e) {
-            log.warn("下载资源失败，GET {}" + url, e);
+            log.warn("下载资源失败，GET {}", url, e);
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
     /**
      * 根据下载链接获取文件字节数组并写入输出流
+     * 优化: 先下载到临时文件，再流式写入输出流，避免将整个文件加载到内存
      *
      * @param url
      * @param headers
      * @param os
      */
     public void getBytesToOutputStream(String url, HttpHeaders headers, OutputStream os) {
+        File tempFile = null;
         try {
-            os.write(this.getBytes(url, headers));
+            ResponseEntity<File> response = this.getFileForEntity(url, headers);
+            tempFile = response.getBody();
+            if (tempFile != null) {
+                Files.copy(tempFile.toPath(), os);
+            }
         } catch (IOException e) {
-            log.warn("下载资源失败，GET {}" + url, e);
+            log.warn("下载资源失败，GET {}", url, e);
+        } finally {
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
@@ -200,10 +220,17 @@ public class RestTemplateHelper {
      */
     public ResponseEntity<byte[]> getBytesForEntity(String url, HttpHeaders headers) {
         ResponseEntity<File> response = this.getFileForEntity(url, headers);
+        File tempFile = response.getBody();
         try {
-            return ResponseEntity.ok(FileUtils.readFileToByteArray(response.getBody()));
+            byte[] data = FileUtils.readFileToByteArray(tempFile);
+            return ResponseEntity.ok(data);
         } catch (IOException e) {
             throw new RuntimeException("文件下载成功后转存到内存发生异常", e);
+        } finally {
+            // 清理临时文件，避免磁盘空间泄漏
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
         }
     }
 
