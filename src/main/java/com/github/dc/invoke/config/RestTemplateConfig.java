@@ -3,6 +3,7 @@ package com.github.dc.invoke.config;
 import com.alibaba.fastjson2.support.spring.http.converter.FastJsonHttpMessageConverter;
 import com.github.dc.invoke.resttemplate.error.handler.DefaultErrorHandler;
 import com.github.dc.invoke.resttemplate.interceptor.DefaultClientHttpRequestInterceptor;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -50,6 +52,10 @@ public class RestTemplateConfig {
         OkHttpClient client = new OkHttpClient.Builder()
                 .sslSocketFactory(HttpsClientHttpRequestFactory.getSocketFactory(), HttpsClientHttpRequestFactory.getX509TrustManager())
                 .hostnameVerifier(HttpsClientHttpRequestFactory.getHostnameVerifier())
+                // 连接池空闲连接保留时长必须小于服务端的 keepalive_timeout，否则会复用一条服务端已关闭的连接，
+                // 报 java.io.IOException: unexpected end of stream on http://...（详见 RestTemplateProperty#poolKeepAliveSeconds）
+                .connectionPool(new ConnectionPool(restTemplateProperty.getPoolMaxIdleConnections(),
+                        restTemplateProperty.getPoolKeepAliveSeconds(), TimeUnit.SECONDS))
                 .build();
         OkHttp3ClientHttpRequestFactory okHttp3ClientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
         okHttp3ClientHttpRequestFactory.setConnectTimeout(restTemplateProperty.getConnectTimeout());
